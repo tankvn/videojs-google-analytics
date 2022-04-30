@@ -17,6 +17,19 @@ To include videojs-google-analytics on your website or web application, use any 
 This is the simplest case. Get the script in whatever way you prefer and include the plugin _after_ you include [video.js][videojs], so that the `videojs` global is available.
 
 ```html
+<head>
+  ...
+  <script async src="https://www.googletagmanager.com/gtag/js?id=GA_TRACKING_ID"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    window.gtag =  function() { dataLayer.push(arguments); }
+    window.gtag('js', new Date());
+
+    window.gtag('config', 'GA_TRACKING_ID');
+  </script>
+</head>
+<body>
+  ...
 <script src="//path/to/video.min.js"></script>
 <script src="//path/to/videojs-google-analytics.min.js"></script>
 <script>
@@ -24,6 +37,57 @@ This is the simplest case. Get the script in whatever way you prefer and include
 
   player.googleAnalytics();
 </script>
+</body>
+```
+
+### Available options
+
+#### Google Analytics
+
+There are two options you can pass to the plugin. The first is to configure which events you would like to trigger from videojs.
+This option is an array objects for each event.  Each event contains the name of the event triggered by Video.js and a label and action which will be sent to Google Analytics.  Choose from the list below:
+
+```javascript
+player.analytics({
+  events: [
+    {
+      name: 'firstplay',
+      label: 'video views',
+      action: 'play'
+    },
+    {
+      name: 'ended',
+      label: 'video ended',
+      action: 'ended'
+    },
+    {
+      name: 'error',
+      label: 'error',
+      action: 'error'
+    },
+    {
+      name: 'timeupdate',
+      action: 'time updated'
+    },
+    {
+      name: 'watchtime',
+      label: 'watch time',
+      action: 'watchtime'
+    }
+  ]
+})
+```
+
+You can also add your own custom events which are not included in the above list. If you include any custom events the event sent to Google Analytics will be the name of the event.
+
+
+To configure the default category names for audio and video files use the `defaultAudioCategory` `defaultVideoCategory` properties when initialising the plugin.
+
+```
+player.analytics({
+  defaultAudioCategory: 'Audio',
+  defaultVideoCategory: 'Video'
+})
 ```
 
 ### Browserify/CommonJS
@@ -54,6 +118,8 @@ require(['video.js', 'videojs-google-analytics'], function(videojs) {
   player.googleAnalytics();
 });
 ```
+
+
 
 ## License
 
