@@ -76,7 +76,12 @@ require('videojs-google-analytics');
 
 var player = videojs('my-video');
 
-player.googleAnalytics();
+player.googleAnalytics({
+  events: {
+      name: 'VIDEO NAME',
+      category: 'Video Category Demo'
+  }
+});
 ```
 
 ### RequireJS/AMD
@@ -87,7 +92,12 @@ When using with RequireJS (or another AMD library), get the script in whatever w
 require(['video.js', 'videojs-google-analytics'], function(videojs) {
   var player = videojs('my-video');
 
-  player.googleAnalytics();
+  player.googleAnalytics({
+    events: {
+        name: 'VIDEO NAME',
+        category: 'Video Category Demo'
+    }
+  });
 });
 ```
 
