@@ -30,155 +30,62 @@ const registerPlugin = videojs.registerPlugin || videojs.plugin;
 const onPlayerReady = (player, options) => {
   player.addClass('vjs-google-analytics');
 
-  let hasBeenTriggered = false;
-  let loadstart = 0;
-  let loadend = 0;
-  let secondsToLoad = 0;
-  let progress = {
-    quarter: false,
-    half: false,
-    threeQuarters: false
-  };
+  const GA_VIDEO_NAME = "ga_video_name";
+  const GA_VIDEO_CATEGORY = "ga_video_category";
+  const GA_VIDEO_ELAPSED = "ga_video_elapsed";
+  const GA_VIDEO_DURATION = "ga_video_duration";
+  const GA_VIDEO_PERCENT = "ga_video_percent";
 
-  function track(player, action, label, value) {
-    let category = options.defaultVideoCategory;
-
-    if (player.isAudio()) {
-      category = options.defaultAudioCategory;
-    }
-
-    if (!label) {
-      label = '';
-    }
-    gtag('event', action, {
-      'event_category': category,
-      'event_label': label,
-      'value': value
-    });
+  function formatSeconds(seconds) {
+    const result = new Date(seconds * 1000).toISOString().slice(11, 19);
+    return result;
   }
 
-  function onPlaying(player, event) {
-    if (!hasBeenTriggered) {
-      hasBeenTriggered = true;
-      track(player, event.action, event.label, secondsToLoad.toFixed(3));
-    }
-  }
-
-  function ended(player, event) {
-    track(player, event.action, event.label);
-    reset();
-  }
-
-  function timeupdate(player, event) {
+  function track(player, action, category) {
     let elapsed = Math.round(player.currentTime());
     let duration = Math.round(player.duration());
-    let percent = Math.round(elapsed / duration * 100);
+    let percent = Math.round(elapsed / duration * 100) + '%';
 
-    if (!progress.quarter && percent > 25) {
-      track(player, event.action, 'Complete 25%');
-      progress.quarter = true;
-    }
-
-    if (!progress.half && percent > 50) {
-      track(player, event.action, 'Complete 50%');
-      progress.half = true;
-    }
-
-    if (!progress.threeQuarters && percent > 75) {
-      track(player, event.action, 'Complete 75%');
-      progress.threeQuarters = true;
-    }
-  }
-
-  function watchtime(player, event) {
-    let elapsed = Math.round(player.currentTime());
-    track(player, event.action, event.label, elapsed);
-  }
-
-  function getEvent(eventName) {
-    return options.events.filter(function(event) {
-      return event.name === eventName;
-    })[0];
-  }
-
-  function reset() {
-    hasBeenTriggered = false;
-    loadstart = 0;
-    loadend = 0;
-    secondsToLoad = 0;
+    // console.log('action:', action, category, formatSeconds( elapsed ), formatSeconds( duration ), percent);
+    localStorage.setItem(GA_VIDEO_NAME, action);
+    localStorage.setItem(GA_VIDEO_CATEGORY, category);
+    localStorage.setItem(GA_VIDEO_ELAPSED, formatSeconds( elapsed ));
+    localStorage.setItem(GA_VIDEO_DURATION, formatSeconds( duration ));
+    localStorage.setItem(GA_VIDEO_PERCENT, percent);
   }
 
   function onLoadStart() {
-    reset();
-    loadstart = new Date();
+    let action = localStorage.getItem(GA_VIDEO_NAME);
+    let category = localStorage.getItem(GA_VIDEO_CATEGORY);
+    let elapsed = localStorage.getItem(GA_VIDEO_ELAPSED);
+    let duration = localStorage.getItem(GA_VIDEO_DURATION);
+    let percent = localStorage.getItem(GA_VIDEO_PERCENT);
+
+    if(action != null && category != null && elapsed != null && duration != null && percent != null) {
+      gtag('event', action, {
+        'event_category': category,
+        'view': 1,
+        'time': elapsed,
+        'duration': duration,
+        'percentage': percent
+      });
+      localStorage.clear();
+      //console.log('track:', action, category, elapsed, duration, percent);
+    }
   }
 
-  function onLoadedData() {
-    loadend = new Date();
-    secondsToLoad = ((loadend - loadstart) / 1000);
-  }
 
   // Set up the custom event tracking that won't use handleEvents
 
-  const eventNames = options.events.map(function(event) {
-    return event.name || event;
+  const events = options.events;
+
+  player.on('loadeddata', function(evt) {
+    onLoadStart();
   });
 
-  if (eventNames.indexOf('firstplay') > -1) {
-    const playEvent = getEvent('firstplay');
-
-    player.one('dispose', function() {
-      reset();
-    });
-    player.one('loadstart', function() {
-      onLoadStart();
-    });
-    player.one('loadeddata', function() {
-      onLoadedData();
-    });
-    player.one('playing', function() {
-      onPlaying(player, playEvent);
-    });
-
-    options.events = options.events.filter((event) => {
-      return event.name !== 'firstplay';
-    });
-  }
-
-  if (eventNames.indexOf('ended') > -1) {
-    const endedEvent = getEvent('ended');
-
-    player.one('ended', function() {
-      ended(player, endedEvent);
-    });
-    options.events = options.events.filter((event) => {
-      return event.name !== 'ended';
-    });
-  }
-
-  if (eventNames.indexOf('timeupdate') > -1) {
-    const timeupdateEvent = getEvent('timeupdate');
-
-    player.on('timeupdate', function() {
-      timeupdate(player, timeupdateEvent);
-    });
-    options.events = options.events.filter((event) => {
-      return event.name !== 'timeupdate';
-    });
-  }
-
-  if (eventNames.indexOf('watchtime') > -1) {
-    const watchtimeEvent = getEvent('watchtime');
-
-    window.addEventListener('beforeunload', function (e) {
-      watchtime(player, watchtimeEvent);
-      //e.preventDefault();
-      //e.returnValue = '';
-    });
-    options.events = options.events.filter((event) => {
-      return event.name !== 'watchtime';
-    });
-  }
+  player.on('timeupdate', function() {
+    track(player, events.name, events.category);
+  });
 
 };
 

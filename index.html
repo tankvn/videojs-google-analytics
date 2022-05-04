@@ -29,32 +29,10 @@
     (function(window, videojs) {
       var examplePlayer = window.examplePlayer = videojs('videojs-google-analytics-player');
       var googleAnalytics = window.googleAnalytics = examplePlayer.googleAnalytics({
-        events: [
-            {
-              name: 'firstplay',
-              label: 'video views',
-              action: 'play',
-            },
-            {
-              name: 'ended',
-              label: 'video ended',
-              action: 'ended',
-            },
-            {
-              name: 'error',
-              label: 'error',
-              action: 'error',
-            },
-            {
-              name: 'timeupdate',
-              action: 'time updated',
-            },
-            {
-              name: 'watchtime',
-              label: 'watch time',
-              action: 'watchtime',
-            }
-          ]
+        events: {
+            name: 'VIDEO NAME',
+            category: 'Video Category Demo'
+        }
       });
     }(window, window.videojs));
   </script>

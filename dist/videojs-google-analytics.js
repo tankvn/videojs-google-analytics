@@ -1,4 +1,4 @@
-/*! @name videojs-google-analytics @version 1.0.0 @license MIT */
+/*! @name videojs-google-analytics @version 2.0.0 @license MIT */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('video.js')) :
   typeof define === 'function' && define.amd ? define(['video.js'], factory) :
@@ -9,7 +9,7 @@
 
   var videojs__default = /*#__PURE__*/_interopDefaultLegacy(videojs);
 
-  var version = "1.0.0";
+  var version = "2.0.0";
 
   var defaults = {
     events: [],
@@ -37,149 +37,56 @@
 
   var onPlayerReady = function onPlayerReady(player, options) {
     player.addClass('vjs-google-analytics');
-    var hasBeenTriggered = false;
-    var loadstart = 0;
-    var loadend = 0;
-    var secondsToLoad = 0;
-    var progress = {
-      quarter: false,
-      half: false,
-      threeQuarters: false
-    };
+    var GA_VIDEO_NAME = "ga_video_name";
+    var GA_VIDEO_CATEGORY = "ga_video_category";
+    var GA_VIDEO_ELAPSED = "ga_video_elapsed";
+    var GA_VIDEO_DURATION = "ga_video_duration";
+    var GA_VIDEO_PERCENT = "ga_video_percent";
 
-    function track(player, action, label, value) {
-      var category = options.defaultVideoCategory;
-
-      if (player.isAudio()) {
-        category = options.defaultAudioCategory;
-      }
-
-      if (!label) {
-        label = '';
-      }
-
-      gtag('event', action, {
-        'event_category': category,
-        'event_label': label,
-        'value': value
-      });
+    function formatSeconds(seconds) {
+      var result = new Date(seconds * 1000).toISOString().slice(11, 19);
+      return result;
     }
 
-    function onPlaying(player, event) {
-      if (!hasBeenTriggered) {
-        hasBeenTriggered = true;
-        track(player, event.action, event.label, secondsToLoad.toFixed(3));
-      }
-    }
-
-    function ended(player, event) {
-      track(player, event.action, event.label);
-      reset();
-    }
-
-    function timeupdate(player, event) {
+    function track(player, action, category) {
       var elapsed = Math.round(player.currentTime());
       var duration = Math.round(player.duration());
-      var percent = Math.round(elapsed / duration * 100);
+      var percent = Math.round(elapsed / duration * 100) + '%'; // console.log('action:', action, category, formatSeconds( elapsed ), formatSeconds( duration ), percent);
 
-      if (!progress.quarter && percent > 25) {
-        track(player, event.action, 'Complete 25%');
-        progress.quarter = true;
-      }
-
-      if (!progress.half && percent > 50) {
-        track(player, event.action, 'Complete 50%');
-        progress.half = true;
-      }
-
-      if (!progress.threeQuarters && percent > 75) {
-        track(player, event.action, 'Complete 75%');
-        progress.threeQuarters = true;
-      }
-    }
-
-    function watchtime(player, event) {
-      var elapsed = Math.round(player.currentTime());
-      track(player, event.action, event.label, elapsed);
-    }
-
-    function getEvent(eventName) {
-      return options.events.filter(function (event) {
-        return event.name === eventName;
-      })[0];
-    }
-
-    function reset() {
-      hasBeenTriggered = false;
-      loadstart = 0;
-      loadend = 0;
-      secondsToLoad = 0;
+      localStorage.setItem(GA_VIDEO_NAME, action);
+      localStorage.setItem(GA_VIDEO_CATEGORY, category);
+      localStorage.setItem(GA_VIDEO_ELAPSED, formatSeconds(elapsed));
+      localStorage.setItem(GA_VIDEO_DURATION, formatSeconds(duration));
+      localStorage.setItem(GA_VIDEO_PERCENT, percent);
     }
 
     function onLoadStart() {
-      reset();
-      loadstart = new Date();
-    }
+      var action = localStorage.getItem(GA_VIDEO_NAME);
+      var category = localStorage.getItem(GA_VIDEO_CATEGORY);
+      var elapsed = localStorage.getItem(GA_VIDEO_ELAPSED);
+      var duration = localStorage.getItem(GA_VIDEO_DURATION);
+      var percent = localStorage.getItem(GA_VIDEO_PERCENT);
 
-    function onLoadedData() {
-      loadend = new Date();
-      secondsToLoad = (loadend - loadstart) / 1000;
+      if (action != null && category != null && elapsed != null && duration != null && percent != null) {
+        gtag('event', action, {
+          'event_category': category,
+          'view': 1,
+          'time': elapsed,
+          'duration': duration,
+          'percentage': percent
+        });
+        localStorage.clear(); //console.log('track:', action, category, elapsed, duration, percent);
+      }
     } // Set up the custom event tracking that won't use handleEvents
 
 
-    var eventNames = options.events.map(function (event) {
-      return event.name || event;
+    var events = options.events;
+    player.on('loadeddata', function (evt) {
+      onLoadStart();
     });
-
-    if (eventNames.indexOf('firstplay') > -1) {
-      var playEvent = getEvent('firstplay');
-      player.one('dispose', function () {
-        reset();
-      });
-      player.one('loadstart', function () {
-        onLoadStart();
-      });
-      player.one('loadeddata', function () {
-        onLoadedData();
-      });
-      player.one('playing', function () {
-        onPlaying(player, playEvent);
-      });
-      options.events = options.events.filter(function (event) {
-        return event.name !== 'firstplay';
-      });
-    }
-
-    if (eventNames.indexOf('ended') > -1) {
-      var endedEvent = getEvent('ended');
-      player.one('ended', function () {
-        ended(player, endedEvent);
-      });
-      options.events = options.events.filter(function (event) {
-        return event.name !== 'ended';
-      });
-    }
-
-    if (eventNames.indexOf('timeupdate') > -1) {
-      var timeupdateEvent = getEvent('timeupdate');
-      player.on('timeupdate', function () {
-        timeupdate(player, timeupdateEvent);
-      });
-      options.events = options.events.filter(function (event) {
-        return event.name !== 'timeupdate';
-      });
-    }
-
-    if (eventNames.indexOf('watchtime') > -1) {
-      var watchtimeEvent = getEvent('watchtime');
-      window.addEventListener('beforeunload', function (e) {
-        watchtime(player, watchtimeEvent); //e.preventDefault();
-        //e.returnValue = '';
-      });
-      options.events = options.events.filter(function (event) {
-        return event.name !== 'watchtime';
-      });
-    }
+    player.on('timeupdate', function () {
+      track(player, events.name, events.category);
+    });
   };
   /**
    * A video.js plugin.

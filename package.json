@@ -1,7 +1,7 @@
 {
   "name": "videojs-google-analytics",
-  "version": "1.0.0",
-  "description": "Track Google Analytics events from video.js players",
+  "version": "2.0.0",
+  "description": "Track Google Analytics 4 events from video.js 7 players",
   "main": "cjs/plugin.js",
   "module": "es/plugin.js",
   "browser": "dist/videojs-google-analytics.js",
