@@ -35,7 +35,12 @@ This is the simplest case. Get the script in whatever way you prefer and include
 <script>
   var player = videojs('my-video');
 
-  player.googleAnalytics();
+  player.googleAnalytics({
+    events: {
+      name: 'VIDEO NAME',
+      category: 'Video Category Demo'
+    }
+  });
 </script>
 </body>
 ```
@@ -49,46 +54,13 @@ This option is an array objects for each event.  Each event contains the name of
 
 ```javascript
 player.analytics({
-  events: [
-    {
-      name: 'firstplay',
-      label: 'video views',
-      action: 'play'
-    },
-    {
-      name: 'ended',
-      label: 'video ended',
-      action: 'ended'
-    },
-    {
-      name: 'error',
-      label: 'error',
-      action: 'error'
-    },
-    {
-      name: 'timeupdate',
-      action: 'time updated'
-    },
-    {
-      name: 'watchtime',
-      label: 'watch time',
-      action: 'watchtime'
-    }
-  ]
+  events: {
+      name: 'VIDEO NAME',
+      category: 'Video Category Demo'
+  }
 })
 ```
 
-You can also add your own custom events which are not included in the above list. If you include any custom events the event sent to Google Analytics will be the name of the event.
-
-
-To configure the default category names for audio and video files use the `defaultAudioCategory` `defaultVideoCategory` properties when initialising the plugin.
-
-```
-player.analytics({
-  defaultAudioCategory: 'Audio',
-  defaultVideoCategory: 'Video'
-})
-```
 
 ### Browserify/CommonJS
 
