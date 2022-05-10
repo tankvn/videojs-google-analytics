@@ -38,7 +38,7 @@ This is the simplest case. Get the script in whatever way you prefer and include
   player.googleAnalytics({
     events: {
       name: 'VIDEO NAME',
-      category: 'Video Category Demo'
+      event_category: 'Video Category Demo'
     }
   });
 </script>
@@ -56,7 +56,7 @@ This option is an array objects for each event.  Each event contains the name of
 player.analytics({
   events: {
       name: 'VIDEO NAME',
-      category: 'Video Category Demo'
+      event_category: 'Video Category Demo'
   }
 })
 ```
@@ -79,7 +79,7 @@ var player = videojs('my-video');
 player.googleAnalytics({
   events: {
       name: 'VIDEO NAME',
-      category: 'Video Category Demo'
+      event_category: 'Video Category Demo'
   }
 });
 ```
@@ -95,7 +95,7 @@ require(['video.js', 'videojs-google-analytics'], function(videojs) {
   player.googleAnalytics({
     events: {
         name: 'VIDEO NAME',
-        category: 'Video Category Demo'
+        event_category: 'Video Category Demo'
     }
   });
 });
